@@ -1,6 +1,10 @@
 from telegram.ext import Updater
 from telegram.ext import CommandHandler
 from telegram.ext import CallbackContext
+from telegram.ext import MessageHandler
+from telegram.ext.filters import Filters
+
+ 
 
 from telegram import ReplyKeyboardMarkup
 from telegram import Update
@@ -15,12 +19,13 @@ message= {
     "msg_bcs": 'این کامند صرفا برای یاد آوری اینه که نشون بده سازنده این ربات به سریال \n better call saul \n علاقه منده',
     "msg_sum": 'مجموع اعداد داده شده برابر با : \n {}',
     "msg_main_menu":"شروع",
+    "msg_mokaleme_menu": "یکی از موارد زیر را انتخاب کنید",
+    "msg_numid": "جسجتو با آیدی",
+    "msg_random":"جستجوی رندوم",
     "bot_search":"جسجتو مکالمه",
     "bot_profile":"پروفایل",
     "bot_contact":"انتقاد و پیشنهاد",
     "bot_return":"بازگشت"
-
-
 
 
 }
@@ -36,12 +41,27 @@ def main_menu_handler(update: Update, context: CallbackContext):
         reply_markup=ReplyKeyboardMarkup(buttons, resize_keyboard=True)
     )
 
+def search_handler(update: Update, context: CallbackContext):
+    buttons = [
+        [message["msg_numid"], message["msg_random"]],
+        [message["bot_return"]]
+    ]
+    update.message.reply_text(
+        text=message["msg_mokaleme_menu"],
+        reply_markup=ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+
+    )
+
+
+
+
 def start_handler(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     first_name = update.message.chat.first_name
     last_name = update.message.chat.last_name
     context.bot.send_chat_action(chat_id, ChatAction.TYPING)
     update.message.reply_text(text=message["msg_start"].format(first_name, last_name))
+    main_menu_handler(update, context)
 
 def help_handler(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
@@ -66,7 +86,10 @@ def sum_handler(update: Update, context: CallbackContext):
     numbers = context.args
     result = sum(int(i) for i in numbers)
     context.bot.send_chat_action(chat_id, ChatAction.TYPING)
-    update.message.reply_text(text="msg_sum".format(result))
+    update.message.reply_text(text=message["msg_sum"].format(result))
+
+def return_handler(update: Update, context: CallbackContext):
+    main_menu_handler(update, context)
 
 def main():
     updater = Updater(token, use_context=True)
@@ -77,6 +100,8 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('bcs', bcs_handler))
     updater.dispatcher.add_handler(CommandHandler('sum', sum_handler))
     updater.dispatcher.add_handler(CommandHandler("menu", main_menu_handler))
+    updater.dispatcher.add_handler(MessageHandler(Filters.regex(message["bot_search"]), search_handler))
+    updater.dispatcher.add_handler(MessageHandler(Filters.regex(message["bot_return"]), return_handler))
 
     updater.start_polling()
 
